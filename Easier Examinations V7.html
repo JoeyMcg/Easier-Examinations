@@ -1,0 +1,888 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Easier Examinations</title>
+<style>
+:root{
+  --bg:#0d1638; --bg2:#131f4d; --panel:#16215a; --chip:#1c2a66;
+  --chip-hover:#233475; --text:#e9e6f7; --muted:#9aa3d1;
+  --purple:#c9b8f2; --purple-soft:#8f7fd6; --border:#2a3670;
+  --radius:14px;
+  padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+*{box-sizing:border-box;}
+html,body{margin:0;background:var(--bg);color:var(--text);}
+body{font-family:-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;min-height:100%;}
+header{
+  display:flex;align-items:center;gap:.6rem;padding:1rem 1.4rem;
+  padding-top:calc(1rem + env(safe-area-inset-top,0px));
+  cursor:pointer;user-select:none;border-bottom:1px solid var(--border);
+  background:var(--bg2);
+}
+header:hover{background:var(--chip-hover);}
+.logo-mark{width:34px;height:34px;border-radius:10px;background:linear-gradient(135deg,var(--purple-soft),var(--purple));
+  display:flex;align-items:center;justify-content:center;font-weight:700;color:var(--bg);flex-shrink:0;}
+.logo-text{font-size:1.15rem;font-weight:700;letter-spacing:.2px;}
+.logo-text span{color:var(--purple);}
+
+main{max-width:1100px;margin:0 auto;padding:1.5rem 1.2rem 3rem;}
+.filters{display:grid;grid-template-columns:1.3fr 1.5fr 1fr 1.3fr 1fr;gap:1rem;}
+@media (max-width:880px){.filters{grid-template-columns:1fr 1fr;}}
+@media (max-width:520px){.filters{grid-template-columns:1fr;}}
+
+.group h3{margin:0 0 .6rem;font-size:.85rem;text-transform:none;color:var(--muted);font-weight:600;}
+.mini-input{
+  width:100%;background:var(--chip);border:1px solid var(--border);border-radius:var(--radius);
+  color:var(--text);padding:.5rem .7rem;font-size:.85rem;margin-bottom:.5rem;
+}
+.mini-input::placeholder{color:var(--muted);}
+.mini-input:focus{outline:none;border-color:var(--purple-soft);}
+#year-input::-webkit-outer-spin-button,#year-input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0;}
+#year-input{-moz-appearance:textfield;}
+.opts{display:flex;flex-direction:column;gap:.4rem;max-height:210px;overflow-y:auto;padding-right:2px;}
+.opts.scroll-hint{position:relative;}
+.opt{
+  display:flex;align-items:center;gap:.55rem;background:var(--chip);border:1px solid var(--border);
+  border-radius:var(--radius);padding:.5rem .7rem;cursor:pointer;font-size:.88rem;transition:background .12s;
+}
+.opt:hover{background:var(--chip-hover);}
+.opt input{accent-color:var(--purple);width:15px;height:15px;flex-shrink:0;}
+.opt.checked{background:var(--purple-soft);color:var(--bg);font-weight:600;border-color:var(--purple-soft);}
+.opt.checked input{accent-color:var(--bg);}
+
+.toolbar{display:flex;justify-content:flex-end;margin:1.1rem 0 .3rem;}
+.btn{
+  background:var(--bg2);border:1px solid var(--border);color:var(--purple);
+  padding:.55rem 1.1rem;border-radius:999px;cursor:pointer;font-size:.85rem;font-weight:600;
+}
+.btn:hover{background:var(--chip-hover);}
+
+.results{margin-top:1.2rem;border-top:1px solid var(--border);padding-top:1.2rem;}
+.results h2{font-size:1rem;color:var(--muted);font-weight:600;margin:0 0 .8rem;}
+.card{
+  background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);
+  padding:.9rem 1rem;margin-bottom:.6rem;display:flex;justify-content:space-between;align-items:center;gap:1rem;flex-wrap:wrap;
+}
+.card .meta{font-size:.85rem;color:var(--muted);}
+.card .meta b{color:var(--text);}
+.card a.dl{
+  background:var(--chip);border:1px solid var(--border);color:var(--purple);text-decoration:none;
+  padding:.45rem .9rem;border-radius:999px;font-size:.82rem;font-weight:600;white-space:nowrap;
+}
+.card a.dl:hover{background:var(--chip-hover);}
+.tag{font-size:.68rem;padding:.15rem .5rem;border-radius:999px;background:var(--bg);color:var(--purple);margin-left:.4rem;border:1px solid var(--border);}
+
+.note{background:var(--panel);border:1px dashed var(--border);border-radius:var(--radius);padding:.9rem 1rem;color:var(--muted);font-size:.85rem;line-height:1.5;margin-bottom:.8rem;}
+.note a{color:var(--purple);}
+.empty{padding:1.4rem;text-align:center;color:var(--muted);font-size:.9rem;}
+.empty a{color:var(--purple);font-weight:600;}
+</style>
+</head>
+<body>
+
+<header onclick="resetAll()">
+  <div class="logo-mark">EE</div>
+  <div class="logo-text">Easier <span>Examinations</span></div>
+</header>
+
+<main>
+  <div class="filters">
+    <div class="group">
+      <h3>Exam</h3>
+      <div class="opts" id="opt-exam"></div>
+    </div>
+    <div class="group">
+      <h3>Subject</h3>
+      <input type="text" id="subject-search" class="mini-input" placeholder="Search subjects…">
+      <div class="opts" id="opt-subject"></div>
+    </div>
+    <div class="group">
+      <h3>Level</h3>
+      <div class="opts" id="opt-level"></div>
+    </div>
+    <div class="group">
+      <h3>Type</h3>
+      <div class="opts" id="opt-type"></div>
+    </div>
+    <div class="group">
+      <h3>Year</h3>
+      <input type="number" id="year-input" class="mini-input" placeholder="Type a year…" min="2010" max="2026">
+      <div class="opts" id="opt-year"></div>
+    </div>
+  </div>
+
+  <div class="toolbar"><button class="btn" onclick="resetAll()">Clear all filters</button></div>
+
+  <div class="results">
+    <h2 id="results-heading">Select filters above to see results</h2>
+    <div id="results-list"></div>
+  </div>
+</main>
+
+<script>
+const EXAMS = ["Leaving Certificate","Leaving Cert Applied","Junior Certificate"];
+const TYPES = ["Exam Paper","Marking Scheme","Project Brief / AAC","Listening File"];
+const YEARS = Array.from({length:2026-2010+1},(_,i)=>2026-i);
+
+const SUBJECT_EXAMS = {
+  "Accounting":["Leaving Certificate"],
+  "Agricultural Science":["Leaving Certificate"],
+  "Modern Greek":["Leaving Certificate"],
+  "Applied Maths":["Leaving Certificate"],
+  "Arabic":["Leaving Certificate"],
+  "Art":["Leaving Certificate","Junior Certificate"],
+  "Biology":["Leaving Certificate"],
+  "Business":["Leaving Certificate"],
+  "Business Studies":["Junior Certificate"],
+  "Chemistry":["Leaving Certificate"],
+  "Classical Studies":["Leaving Certificate","Junior Certificate"],
+  "Construction Studies":["Leaving Certificate"],
+  "CSPE":["Junior Certificate"],
+  "Croatian":["Leaving Certificate"],
+  "Czech":["Leaving Certificate"],
+  "Dutch":["Leaving Certificate"],
+  "Design & Communication Graphics":["Leaving Certificate"],
+  "Technical Graphics":["Junior Certificate"],
+  "Economics":["Leaving Certificate"],
+  "Engineering":["Leaving Certificate","Junior Certificate"],
+  "English":["Leaving Certificate","Junior Certificate"],
+  "Environmental & Social Studies":["Junior Certificate"],
+  "French":["Leaving Certificate","Junior Certificate"],
+  "Geography":["Leaving Certificate","Junior Certificate"],
+  "German":["Leaving Certificate","Junior Certificate"],
+  "History":["Leaving Certificate","Junior Certificate"],
+  "Home Economics":["Leaving Certificate","Junior Certificate"],
+  "Irish":["Leaving Certificate","Junior Certificate"],
+  "Italian":["Leaving Certificate","Junior Certificate"],
+  "Japanese":["Leaving Certificate","Junior Certificate"],
+  "Latin":["Leaving Certificate"],
+  "Mandarin Chinese":["Leaving Certificate"],
+  "Materials Technology (Wood)":["Junior Certificate"],
+  "Mathematics":["Leaving Certificate","Junior Certificate"],
+  "Metalwork":["Junior Certificate"],
+  "Music":["Leaving Certificate","Junior Certificate"],
+  "Physical Education":["Leaving Certificate","Junior Certificate"],
+  "Physics":["Leaving Certificate"],
+  "Politics & Society":["Leaving Certificate"],
+  "Religious Education":["Leaving Certificate","Junior Certificate"],
+  "SPHE":["Junior Certificate"],
+  "Spanish":["Leaving Certificate","Junior Certificate"],
+  "Technology":["Junior Certificate", "Leaving Certificate"],
+  "Computer Science":["Leaving Certificate"]
+};
+const ALL_SUBJECTS = Object.keys(SUBJECT_EXAMS).sort();
+
+const DATA = [];
+
+// Leaving Cert Mathematics
+const MATHS_PAPER_SUFFIX_OVERRIDES = { 2014: { p1:"130", p2:"230" } };
+
+for (let y = 2010; y <= 2026; y++){
+  [["A","Higher"],["G","Ordinary"]].forEach(([code,level])=>{
+    const ov = MATHS_PAPER_SUFFIX_OVERRIDES[y];
+    [[ov?ov.p1:"100",1],[ov?ov.p2:"200",2]].forEach(([suffix,p])=>{
+      DATA.push({
+        exam:"Leaving Certificate", subject:"Mathematics", level, year:y,
+        type:"Exam Paper", paper:`Paper ${p}`,
+        url:`https://www.examinations.ie/archive/exampapers/${y}/LC003${code}LP${suffix}EV.pdf`
+      });
+    });
+  });
+}
+
+for (let y = 2010; y <= 2025; y++){
+  [["A","Higher"],["G","Ordinary"]].forEach(([code,level])=>{
+    DATA.push({
+      exam:"Leaving Certificate",
+      subject:"Mathematics",
+      level,
+      year:y,
+      type:"Marking Scheme",
+      paper:"Paper 1 & 2",
+      url:`https://www.examinations.ie/archive/markingschemes/${y}/LC003${code}LP000EV.pdf`
+    });
+  });
+}
+
+function addLeavingCertSubject(
+  subjectName, 
+  subjectCode, 
+  startYear, 
+  endYear, 
+  hasTwoPapers, 
+  hasAudio = false, 
+  audioExt = "mp3", 
+  hasFoundation = false, 
+  langSuffix = "EV", 
+  audioLangSuffix = "EV"
+) {
+  for (let y = startYear; y <= endYear; y++) {
+    [["A", "Higher"], ["G", "Ordinary"]].forEach(([code, level]) => {
+      if (hasTwoPapers) {
+        DATA.push({
+          exam: "Leaving Certificate", subject: subjectName, level: level, year: y,
+          type: "Exam Paper", paper: "Paper 1",
+          url: `https://www.examinations.ie/archive/exampapers/${y}/LC${subjectCode}${code}LP100${langSuffix}.pdf`
+        });
+        DATA.push({
+          exam: "Leaving Certificate", subject: subjectName, level: level, year: y,
+          type: "Exam Paper", paper: "Paper 2",
+          url: `https://www.examinations.ie/archive/exampapers/${y}/LC${subjectCode}${code}LP200${langSuffix}.pdf`
+        });
+        DATA.push({
+          exam: "Leaving Certificate", subject: subjectName, level: level, year: y,
+          type: "Marking Scheme", paper: "Paper 1 & 2",
+          url: `https://www.examinations.ie/archive/markingschemes/${y}/LC${subjectCode}${code}LP000EV.pdf`
+        });
+      } else {
+        DATA.push({
+          exam: "Leaving Certificate", subject: subjectName, level: level, year: y,
+          type: "Exam Paper",
+          url: `https://www.examinations.ie/archive/exampapers/${y}/LC${subjectCode}${code}LP000${langSuffix}.pdf`
+        });
+        DATA.push({
+          exam: "Leaving Certificate", subject: subjectName, level: level, year: y,
+          type: "Marking Scheme",
+          url: `https://www.examinations.ie/archive/markingschemes/${y}/LC${subjectCode}${code}LP000EV.pdf`
+        });
+      }
+
+      if (hasAudio) {
+        DATA.push({
+          exam: "Leaving Certificate", subject: subjectName, level: level, year: y,
+          type: "Listening File", paper: "Aural Audio",
+          url: `https://www.examinations.ie/archive/exampapers/${y}/LC${subjectCode}${code}LP000${audioLangSuffix}.${audioExt}`
+        });
+      }
+    });
+
+    if (hasFoundation) {
+      DATA.push({
+        exam: "Leaving Certificate", subject: subjectName, level: "Foundation", year: y,
+        type: "Exam Paper",
+        url: `https://www.examinations.ie/archive/exampapers/${y}/LC${subjectCode}BLP000${langSuffix}.pdf`
+      });
+      DATA.push({
+        exam: "Leaving Certificate", subject: subjectName, level: "Foundation", year: y,
+        type: "Marking Scheme",
+        url: `https://www.examinations.ie/archive/markingschemes/${y}/LC${subjectCode}BLP000EV.pdf`
+      });
+      if (hasAudio) {
+        DATA.push({
+          exam: "Leaving Certificate", subject: subjectName, level: "Foundation", year: y,
+          type: "Listening File", paper: "Aural Audio",
+          url: `https://www.examinations.ie/archive/exampapers/${y}/LC${subjectCode}BLP017${audioLangSuffix}.${audioExt}`
+        });
+      }
+    }
+  }
+}
+
+// Irish Leaving Cert Generator Function
+function addIrishLeavingCert(startYear = 2010, endYear = 2026) {
+  const subjectName = "Irish";
+  const subjectCode = "001";
+  const audioExt = "mp3";
+
+  for (let y = startYear; y <= endYear; y++) {
+    const foundationPaperCode = (y === 2026) ? "100" : "000";
+
+    [["A", "Higher"], ["G", "Ordinary"]].forEach(([code, level]) => {
+      DATA.push({
+        exam: "Leaving Certificate", subject: subjectName, level: level, year: y,
+        type: "Exam Paper", paper: "Paper 1",
+        url: `https://www.examinations.ie/archive/exampapers/${y}/LC${subjectCode}${code}LP100IV.pdf`
+      });
+      DATA.push({
+        exam: "Leaving Certificate", subject: subjectName, level: level, year: y,
+        type: "Exam Paper", paper: "Paper 2",
+        url: `https://www.examinations.ie/archive/exampapers/${y}/LC${subjectCode}${code}LP200IV.pdf`
+      });
+      DATA.push({
+        exam: "Leaving Certificate", subject: subjectName, level: level, year: y,
+        type: "Marking Scheme", paper: "Paper 1 & 2",
+        url: `https://www.examinations.ie/archive/markingschemes/${y}/LC${subjectCode}${code}LP000IV.pdf`
+      });
+      DATA.push({
+        exam: "Leaving Certificate", subject: subjectName, level: level, year: y,
+        type: "Listening File", paper: "Aural Audio",
+        url: `https://www.examinations.ie/archive/exampapers/${y}/LC${subjectCode}ZLP017IV.${audioExt}`
+      });
+    });
+
+    DATA.push({
+      exam: "Leaving Certificate", subject: subjectName, level: "Foundation", year: y,
+      type: "Exam Paper",
+      url: `https://www.examinations.ie/archive/exampapers/${y}/LC${subjectCode}BLP${foundationPaperCode}IV.pdf`
+    });
+    DATA.push({
+      exam: "Leaving Certificate", subject: subjectName, level: "Foundation", year: y,
+      type: "Marking Scheme",
+      url: `https://www.examinations.ie/archive/markingschemes/${y}/LC${subjectCode}BLP000IV.pdf`
+    });
+    DATA.push({
+      exam: "Leaving Certificate", subject: subjectName, level: "Foundation", year: y,
+      type: "Listening File", paper: "Aural Audio",
+      url: `https://www.examinations.ie/archive/exampapers/${y}/LC${subjectCode}BLP017IV.${audioExt}`
+    });
+  }
+}
+
+function addMultiPartSubject(
+  subjectName, 
+  subjectCode, 
+  startYear, 
+  endYear, 
+  parts, 
+  levels = [["A", "Higher"], ["G", "Ordinary"]], 
+  defaultLangSuffix = "EV", 
+  examName = "Leaving Certificate"
+) {
+  const parseLevel = (lvl) => {
+    if (Array.isArray(lvl)) return { secCode: lvl[0], levelName: lvl[1] };
+    const code = String(lvl).toUpperCase();
+    if (code === "A" || code === "AL" || code === "HL") return { secCode: "A", levelName: "Higher" };
+    if (code === "G" || code === "OL" || code === "GL") return { secCode: "G", levelName: "Ordinary" };
+    if (code === "C" || code === "CL" || code === "COMMON") return { secCode: "C", levelName: "Common" };
+    if (code === "B" || code === "FL" || code === "FOUNDATION") return { secCode: "B", levelName: "Foundation" };
+    if (code === "Z" || code === "ZL" || code === "COMMON")  return { secCode: "Z", levelName: "COMMON" };
+    return { secCode: lvl, levelName: lvl };
+  };
+
+  const formattedLevels = levels.map(parseLevel);
+
+  for (let y = startYear; y <= endYear; y++) {
+    // 1. Process standard components for each level (e.g., Higher / Ordinary)
+    formattedLevels.forEach(({ secCode, levelName }) => {
+      parts.forEach(part => {
+        if (part.level) return; // Skip fixed-level parts handled separately below
+
+        const partCode = part.code || "000";
+        const langSuffix = part.lang || defaultLangSuffix;
+        const type = part.type || "Exam Paper";
+        const ext = part.ext || (type === "Listening File" ? "mp3" : "pdf");
+
+        DATA.push({
+          exam: examName,
+          subject: subjectName,
+          level: levelName,
+          year: y,
+          type: type,
+          paper: part.name,
+          url: `https://www.examinations.ie/archive/exampapers/${y}/LC${subjectCode}${secCode}LP${partCode}${langSuffix}.${ext}`
+        });
+      });
+
+      DATA.push({
+        exam: examName,
+        subject: subjectName,
+        level: levelName,
+        year: y,
+        type: "Marking Scheme",
+        paper: "All Components",
+        url: `https://www.examinations.ie/archive/markingschemes/${y}/LC${subjectCode}${secCode}LP000EV.pdf`
+      });
+    });
+
+    // 2. Process fixed-level components (e.g., Common Level Sound Files)
+    parts.filter(part => part.level).forEach(part => {
+      const { secCode, levelName } = parseLevel(part.level);
+      const partCode = part.code || "000";
+      const langSuffix = part.lang || defaultLangSuffix;
+      const type = part.type || "Exam Paper";
+      const ext = part.ext || (type === "Listening File" ? "mp3" : "pdf");
+
+      DATA.push({
+        exam: examName,
+        subject: subjectName,
+        level: levelName,
+        year: y,
+        type: type,
+        paper: part.name,
+        url: `https://www.examinations.ie/archive/exampapers/${y}/LC${subjectCode}${secCode}LP${partCode}${langSuffix}.${ext}`
+      });
+    });
+  }
+}
+
+// Subject Index Calls
+
+// --- Single-Part Subjects ---
+addLeavingCertSubject("Physics", "021", 2010, 2026, false);
+addLeavingCertSubject("Applied Maths", "020", 2010, 2026, false);
+addLeavingCertSubject("History", "004", 2010, 2026, false);
+addLeavingCertSubject("Accounting", "032", 2010, 2026, false);
+addLeavingCertSubject("Agricultural Science", "024", 2010, 2026, false);
+addLeavingCertSubject("Bulgarian", "559", 2010, 2026, false);
+addLeavingCertSubject("Economics", "034", 2010, 2026, false);
+addLeavingCertSubject("Chemistry", "022", 2010, 2026, false);
+addLeavingCertSubject("Engineering", "027", 2010, 2026, false);
+addLeavingCertSubject("Construction Studies", "029", 2010, 2026, false);
+addLeavingCertSubject("Croatian", "567", 2010, 2026, false);
+addLeavingCertSubject("Czech", "547", 2010, 2026, false);
+addLeavingCertSubject("Dutch", "017", 2010, 2026, false);
+addLeavingCertSubject("Home Economics", "098", 2010, 2019, false);
+addLeavingCertSubject("Physical Education", "225", 2020, 2026, false);
+addLeavingCertSubject("Politcs and Society", "568", 2018, 2026, false);
+addLeavingCertSubject("Religious Education", "223", 2010, 2026, false);
+addLeavingCertSubject("Biology", "025", 2010, 2018, false);
+addLeavingCertSubject("Business", "033", 2010, 2019, false);
+addIrishLeavingCert(2010, 2026);
+
+// --- Multi-Part Subjects ---
+addMultiPartSubject("Computer Science", "219", 2020, 2020, [
+  { name: "Section A & B", code: "038" },
+  { name: "Section C", code: "040" }
+], [["A", "Higher"]]);
+
+addMultiPartSubject("Computer Science", "219", 2021, 2026, [
+  { name: "Section A & B", code: "038" },
+  { name: "Section C", code: "040" }
+], [["A", "Higher"], ["G", "Ordinary"]]);
+
+addMultiPartSubject("Applied Technology", "065", 2010, 2026, [
+  { name: "Section A", code: "014" },
+  { name: "Section B&C", code: "039" }
+], [["A", "Higher"], ["G", "Ordinary"]]);
+
+addMultiPartSubject("Business", "033", 2020, 2026, [
+  { name: "Section 1", code: "032", level: ["A", "Higher"] },
+  { name: "Section 2&3", code: "041", level: ["A", "Higher"] }
+], [["A", "Higher"]]);
+
+addMultiPartSubject("Business", "033", 2020, 2026, [
+  { name: "Section 1", code: "032", level: ["G", "Ordinary"] },
+  { name: "Section 2&3", code: "033", level: ["G", "Ordinary"] }
+], [["G", "Ordinary"]]);
+
+addMultiPartSubject("Art", "014", 2021, 2026, [
+  { name: "Exam Paper", code: "000" },
+  { name: "Picture / Illustration", code: "004", lang: "BV" }
+], [["A", "Higher"], ["G", "Ordinary"]]);
+
+addMultiPartSubject("Art", "014", 2020, 2020, [
+  { name: "Picture / Illustration", code: "004" },
+  { name: "History & Appreciation of Art", code: "013" }
+ ], [["A", "Higher"], ["G", "Ordinary"]]);
+
+addMultiPartSubject("Art", "014", 2019, 2019, [
+  { name: "Life Sketching", code: "012" },
+  { name: "History & Appreciation of Art", code: "013" },
+  { name: "Source Paper", code: "C00" }
+ ], [["A", "Higher"], ["G", "Ordinary"]]);
+
+addMultiPartSubject("Art", "014", 2018, 2018, [
+  { name: "Life Sketching", code: "012" },
+  { name: "History & Appreciation of Art", code: "013" },
+  { name: "Coursework Brief", code: "027" },
+  { name: "Source Paper", code: "C00" }
+], [["A", "Higher"], ["G", "Ordinary"]]);
+
+addMultiPartSubject("Art", "014", 2010, 2017, [
+  { name: "Imaginative Composition", code: "009" },
+  { name: "Design", code: "010" },
+  { name: "Craftwork", code: "011" },
+  { name: "Life Sketching", code: "012" },
+  { name: "History & Appreciation of Art", code: "013" },
+  { name: "Source Paper", code: "C00" }
+], [["A", "Higher"], ["G", "Ordinary"]]);
+
+addMultiPartSubject("English", "002", 2010, 2026, [
+  { name: "Paper 1", code: "028" },
+  { name: "Paper 2", code: "200" }
+], [["A", "Higher"], ["G", "Ordinary"]]);
+
+addMultiPartSubject("Biology", "025", 2019, 2026, [
+  { name: "Section A&B", code: "038" },
+  { name: "Section C", code: "040" }
+], [["A", "Higher"], ["G", "Ordinary"]]);
+
+addMultiPartSubject("Engineering", "027", 2010, 2026, [
+  { name: "Practical Day 1", code: "034", lang: "BV" },
+  { name: "Practical Day 2", code: "035", lang: "BV" },
+  { name: "Practical Day 3", code: "036", lang: "BV" }
+], [["C", "Common"]]);
+
+addMultiPartSubject("Construction Studies", "029", 2010, 2026, [
+  { name: "Practical Day 1", code: "034", lang: "EV" },
+  { name: "Practical Day 2", code: "035", lang: "EV" },
+  { name: "Practical Day 3", code: "036", lang: "EV" }
+], [["C", "Common"]]);
+
+addMultiPartSubject("Home Economics", "098", 2020, 2026, [
+  { name: "Secion A", code: "014", lang: "EV" },
+  { name: "Section B&C", code: "039", lang: "EV" },
+], [["A", "Higher"], ["G", "Ordinary"]]);
+
+addMultiPartSubject("Classical Studies", "008", 2022, 2026, [
+  { name: "Exam Paper", code: "000",},
+  { name: "Picture / Illustration", code: "004", lang: "BV" }
+], [["A", "Higher"], ["G", "Ordinary"]]);
+
+addMultiPartSubject("Classical Studies", "008", 2010, 2021, [
+  { name: "Exam Paper", code: "000",},
+  { name: "Picture / Illustration", code: "004", }
+], [["A", "Higher"], ["G", "Ordinary"]]);
+
+addMultiPartSubject("Design & Communication Graphics", "562", 2010, 2026, [
+  { name: "Section A", code: "014" },
+  { name: "Section B", code: "039" }
+]);
+
+addMultiPartSubject("French", "010", 2023, 2026, [
+  { name: "Written Paper", code: "000", lang: "BV" },
+  { name: "Aural Paper",   code: "A00", lang: "BV" },
+  { name: "Sound File",    code: "017", lang: "EV", type: "Listening File", ext: "mp3", level: ["C", "Common"] }
+], [["A", "Higher"], ["G", "Ordinary"]], "EV");
+
+addMultiPartSubject("French", "010", 2019, 2022, [
+  { name: "Written Paper", code: "000", lang: "BV" },
+  { name: "Aural Paper",   code: "A00", lang: "BV" },
+  { name: "Sound File",    code: "017", lang: "EV", type: "Listening File", ext: "mp3", level: ["Z", "Common"] }
+], [["A", "Higher"], ["G", "Ordinary"]], "EV");
+
+addMultiPartSubject("French", "010", 2010, 2011, [
+  { name: "Written Paper", code: "000", lang: "EV" },
+  { name: "Aural Paper",   code: "A00", lang: "EV" },
+  { name: "Sound File",    code: "017", lang: "EV", type: "Listening File", ext: "mp3", level: ["Z", "Common"] }
+], [["A", "Higher"], ["G", "Ordinary"]], "EV");
+
+addMultiPartSubject("French", "010", 2013, 2018, [
+  { name: "Written Paper", code: "000", lang: "EV" },
+  { name: "Aural Paper",   code: "A00", lang: "EV" },
+  { name: "Sound File",    code: "017", lang: "EV", type: "Listening File", ext: "mp3", level: ["Z", "Common"] }
+], [["A", "Higher"], ["G", "Ordinary"]], "EV");
+
+addMultiPartSubject("French", "010", 2012, 2012, [
+  { name: "Written Paper", code: "000", lang: "EV" },
+  { name: "Aural Paper",   code: "A00", lang: "EV" },
+  { name: "Sound File",    code: "O17", lang: "EV", type: "Listening File", ext: "mp3", level: ["Z", "Common"] }
+], [["A", "Higher"], ["G", "Ordinary"]], "EV");
+
+addMultiPartSubject("German", "011", 2019, 2026, [
+  { name: "Written Paper", code: "000", lang: "BV" },
+  { name: "Aural Paper",   code: "A00", lang: "BV" },
+  { name: "Sound File",    code: "017", lang: "BV", type: "Listening File", ext: "mp3", level: ["C", "Common"] }
+], [["A", "Higher"], ["G", "Ordinary"]], "EV");
+
+addMultiPartSubject("German", "011", 2010, 2018, [
+  { name: "Written Paper", code: "000", lang: "EV" },
+  { name: "Aural Paper",   code: "A00", lang: "EV" },
+  { name: "Sound File",    code: "017", lang: "EV", type: "Listening File", ext: "mp3", level: ["Z", "Common"] }
+], [["A", "Higher"], ["G", "Ordinary"]], "EV");
+
+addMultiPartSubject("Spanish", "012", 2010, 2021, [
+  { name: "Written Paper", code: "000", lang: "EV" },
+  { name: "Section B", code: "015", lang: "EV" },
+  { name: "Aural Paper",   code: "A00", lang: "EV" },
+  { name: "Sound File",    code: "017", lang: "EV", type: "Listening File", ext: "mp3", level: ["Z", "Common"] }
+], [["A", "Higher"], ["G", "Ordinary"]], "EV");
+
+addMultiPartSubject("Spanish", "012", 2022, 2026, [
+  { name: "Written Paper", code: "000", lang: "EV" },
+  { name: "Section B", code: "015", lang: "EV" },
+  { name: "Aural Paper",   code: "A00", lang: "EV" },
+  { name: "Sound File",    code: "017", lang: "BV", type: "Listening File", ext: "mp3", level: ["Z", "Common"] }
+], [["A", "Higher"], ["G", "Ordinary"]], "EV");
+
+addMultiPartSubject("Geography", "005", 2020, 2026, [
+  { name: "Part 1", code: "042", lang: "EV" },
+  { name: "Part 2", code: "043", lang: "EV" },
+  { name: "Map", code: "003", lang: "EV", level: ["C", "Common"], type: "Exam Paper" },
+  { name: "Legend", code: "C00", lang: "EV", level: ["C", "Common"], type: "Exam Paper" }
+], [["A", "Higher"], ["G", "Ordinary"]], "EV");
+
+addMultiPartSubject("Geography", "005", 2010, 2019, [
+  { name: "Exam Paper", code: "000", lang: "EV" },
+  { name: "Map", code: "003", lang: "EV", level: ["C", "Common"], type: "Exam Paper" },
+  { name: "Legend", code: "C00", lang: "EV", level: ["C", "Common"], type: "Exam Paper" }
+], [["A", "Higher"], ["G", "Ordinary"]], "EV");
+
+addMultiPartSubject("Italian", "013", 2019, 2026, [
+  { name: "Written Paper", code: "000", lang: "BV" },
+  { name: "Aural Paper",   code: "A00", lang: "BV" },
+  { name: "Sound File",    code: "017", lang: "BV", type: "Listening File", ext: "mp3", level: ["Z", "Common"] }
+], [["A", "Higher"], ["G", "Ordinary"]], "EV");
+
+addMultiPartSubject("Italian", "013", 2010, 2018, [
+  { name: "Written Paper", code: "000", lang: "EV" },
+  { name: "Aural Paper",   code: "A00", lang: "EV" },
+  { name: "Sound File",    code: "017", lang: "EV", type: "Listening File", ext: "mp3", level: ["Z", "Common"] }
+], [["A", "Higher"], ["G", "Ordinary"]], "EV");
+
+addMultiPartSubject("Mandarin Chinese", "566", 2022, 2026, [
+  { name: "Written Paper", code: "000", lang: "EV" },
+  { name: "Aural Paper",   code: "A00", lang: "EV" },
+  { name: "Sound File",    code: "017", lang: "BV", type: "Listening File", ext: "mp3", level: ["Z", "Common"] }
+], [["A", "Higher"], ["G", "Ordinary"]], "EV");
+
+addMultiPartSubject("Modern Greek", "019", 2021, 2026, [
+  { name: "Exam Paper", code: "000", lang: "EV" },
+  ], [["A", "Higher"]]);
+
+addMultiPartSubject("Modern Greek", "019", 2010, 2019, [
+  { name: "Exam Paper", code: "000", lang: "EV" },
+  ], [["A", "Higher"]]);
+
+addMultiPartSubject("Technology", "065", 2019, 2026, [
+  { name: "Section A", code: "014", lang: "EV" },
+  { name: "Section B & C", code: "039", lang: "EV" },
+  ], [["A", "Higher"], ["G", "Ordinary"]]);
+
+addMultiPartSubject("Technology", "065", 2010, 2018, [
+  { name: "Section A", code: "014", lang: "EV" },
+  { name: "Section B", code: "015", lang: "EV" },
+  ], [["A", "Higher"], ["G", "Ordinary"]]);
+
+addMultiPartSubject("Music", "067", 2026, 2026, [
+  { name: "Composing", code: "006", lang: "EV" },
+  { name: "Elective", code: "007", lang: "EV", level: ["A", "Higher"] },
+  { name: "Listening", code: "008", lang: "EV" },
+  { name: "Sound File 1", code: "045", lang: "EV", type: "Listening file", ext: "mp3", level: ["Z", "Common"] },
+  { name: "Sound File 2", code: "046", lang: "EV", type: "Listening file", ext: "mp3", level: ["Z", "Common"] }
+], [["A", "Higher"], ["G", "Ordinary"]]);
+
+addMultiPartSubject("Music", "067", 2020, 2020, [
+  { name: "Composing", code: "006", lang: "EV" },
+  { name: "Listening", code: "008", lang: "EV" },
+  { name: "Sound File 1", code: "117", lang: "EV", type: "Listening file", ext: "mp3", level: ["Z", "Common"] },
+  { name: "Sound File 2", code: "217", lang: "EV", type: "Listening file", ext: "mp3", level: ["Z", "Common"] }
+], [["A", "Higher"]]);
+
+addMultiPartSubject("Music", "067", 2017, 2019, [
+  { name: "Composing", code: "006", lang: "EV" },
+  { name: "Elective", code: "007", lang: "EV", level: ["A", "Higher"] },
+  { name: "Listening", code: "008", lang: "EV" },
+  { name: "Aural Memory Rhythm", code: "024", lang: "EV", type: "Listening file", ext: "mp3" },
+  { name: "Sound File 1", code: "117", lang: "EV", type: "Listening file", ext: "mp3", level: ["Z", "Common"] },
+  { name: "Sound File 2", code: "217", lang: "EV", type: "Listening file", ext: "mp3", level: ["Z", "Common"] }
+], [["A", "Higher"], ["G", "Ordinary"]]);
+
+addMultiPartSubject("Music", "067", 2013, 2016, [
+  { name: "Composing", code: "006", lang: "EV" },
+  { name: "Elective", code: "007", lang: "EV", level: ["A", "Higher"] },
+  { name: "Listening", code: "008", lang: "EV" },
+  { name: "Unprepared Tests", code: "U00", lang: "EV" },
+  { name: "Sound File 1", code: "117", lang: "EV", type: "Listening file", ext: "mp3", level: ["Z", "Common"] },
+  { name: "Sound File 2", code: "217", lang: "EV", type: "Listening file", ext: "mp3", level: ["Z", "Common"] }
+], [["A", "Higher"], ["G", "Ordinary"]]);
+
+addMultiPartSubject("Music", "067", 2012, 2012, [
+  { name: "Composing", code: "006", lang: "EV" },
+  { name: "Elective", code: "007", lang: "EV", level: ["A", "Higher"] },
+  { name: "Listening", code: "008", lang: "EV" },
+  { name: "Sound File 1", code: "117", lang: "EV", type: "Listening file", ext: "mp3", level: ["Z", "Common"] },
+  { name: "Sound File 2", code: "217", lang: "EV", type: "Listening file", ext: "mp3", level: ["Z", "Common"] }
+], [["A", "Higher"], ["G", "Ordinary"]]);
+
+addMultiPartSubject("Music", "067", 2010, 2011, [
+  { name: "Composing", code: "006", lang: "EV" },
+  { name: "Elective", code: "007", lang: "EV", level: ["A", "Higher"] },
+  { name: "Listening", code: "008", lang: "EV" },
+  { name: "Sound File 1", code: "100", lang: "EV", type: "Listening file", ext: "mp3", level: ["Z", "Common"] },
+  { name: "Sound File 2", code: "200", lang: "EV", type: "Listening file", ext: "mp3", level: ["Z", "Common"] }
+], [["A", "Higher"], ["G", "Ordinary"]]);
+
+addMultiPartSubject("Music", "067", 2022, 2025, [
+  { name: "Composing", code: "006", lang: "EV" },
+  { name: "Elective", code: "007", lang: "EV", level: ["A", "Higher"] },
+  { name: "Listening", code: "008", lang: "EV" },
+  { name: "Aural Memory Rhythm", code: "024", lang: "EV", type: "Listening file", ext: "mp3" },
+  { name: "Sound File 1", code: "045", lang: "EV", type: "Listening file", ext: "mp3", level: ["Z", "Common"] },
+  { name: "Sound File 2", code: "046", lang: "EV", type: "Listening file", ext: "mp3", level: ["Z", "Common"] }
+], [["A", "Higher"], ["G", "Ordinary"]]);
+
+addMultiPartSubject("Music", "067", 2021, 2021, [
+  { name: "Composing", code: "006", lang: "EV" },
+  { name: "Elective", code: "007", lang: "EV", level: ["A", "Higher"] },
+  { name: "Listening", code: "008", lang: "EV" },
+  { name: "Aural Memory Rhythm", code: "024", lang: "EV", type: "Listening file", ext: "mp3" },
+  { name: "Sound File 1", code: "117", lang: "EV", type: "Listening file", ext: "mp3", level: ["Z", "Common"] },
+  { name: "Sound File 2", code: "217", lang: "EV", type: "Listening file", ext: "mp3", level: ["Z", "Common"] }
+], [["A", "Higher"], ["G", "Ordinary"]]);
+
+const state = {exam:new Set(),subject:new Set(),level:new Set(),type:new Set(),year:new Set()};
+
+const DEFAULT_LEVELS = ["Higher","Ordinary","Foundation","Common"];
+const JC_HL3 = new Set(["Mathematics","English","Irish"]);
+
+function computeValidLevels(){
+  const hasLC = state.exam.has("Leaving Certificate");
+  const hasJC = state.exam.has("Junior Certificate");
+  let levels = new Set(DEFAULT_LEVELS);
+
+  if(hasJC){
+    if(state.subject.size===0){
+      levels = new Set(["Higher","Ordinary","Common"]);
+    } else {
+      let hasHL3=false, hasOther=false;
+      state.subject.forEach(s=>{ if(JC_HL3.has(s)) hasHL3=true; else hasOther=true; });
+      if(hasHL3 && hasOther) levels = new Set(["Higher","Ordinary","Common"]);
+      else if(hasHL3) levels = new Set(["Higher","Ordinary"]);
+      else levels = new Set(["Common"]);
+    }
+  }
+
+  if(hasLC){
+    levels.add("Higher"); levels.add("Ordinary"); levels.add("Foundation"); levels.add("Common");
+  }
+
+  return Array.from(levels);
+}
+
+function computeValidSubjects(){
+  if(state.exam.size===0) return ALL_SUBJECTS;
+  return ALL_SUBJECTS.filter(s=>{
+    const exams = SUBJECT_EXAMS[s] || ["Leaving Certificate"];
+    return Array.from(state.exam).some(e=>{
+      if(e==="Leaving Cert Applied") return exams.includes("Leaving Certificate");
+      return exams.includes(e);
+    });
+  });
+}
+
+function refreshLevelOptions(){
+  const valid = computeValidLevels();
+  Array.from(state.level).forEach(v=>{ if(!valid.includes(v)) state.level.delete(v); });
+  if(valid.length===1){ state.level = new Set(valid); }
+  buildGroup("opt-level", valid, "level");
+}
+
+let subjectSearchTerm = "";
+
+function applySubjectSearch(){
+  const term = subjectSearchTerm.trim().toLowerCase();
+  document.querySelectorAll('#opt-subject .opt').forEach(o=>{
+    o.style.display = o.dataset.val.toLowerCase().includes(term) ? "" : "none";
+  });
+}
+
+function refreshSubjectOptions(){
+  const valid = computeValidSubjects();
+  Array.from(state.subject).forEach(v=>{ if(!valid.includes(v)) state.subject.delete(v); });
+  buildGroup("opt-subject", valid, "subject");
+  applySubjectSearch();
+}
+
+function buildGroup(id,items,key){
+  const el = document.getElementById(id);
+  el.innerHTML = items.map(v=>`
+    <label class="opt${state[key].has(v)?" checked":""}" data-key="${key}" data-val="${v}">
+      <input type="checkbox"${state[key].has(v)?" checked":""}>${v}
+    </label>`).join("");
+  el.querySelectorAll(".opt").forEach(opt=>{
+    opt.addEventListener("click",()=>{
+      const key=opt.dataset.key, val=opt.dataset.val;
+      const cb=opt.querySelector("input");
+      if(cb.checked){
+        el.querySelectorAll(".opt").forEach(sib=>{
+          if(sib!==opt){
+            sib.classList.remove("checked");
+            sib.querySelector("input").checked=false;
+            state[key].delete(sib.dataset.val);
+          }
+        });
+        state[key].add(val);opt.classList.add("checked");
+      } else {
+        state[key].delete(val);opt.classList.remove("checked");
+      }
+      if(key==="exam") refreshSubjectOptions();
+      if(key==="exam" || key==="subject") refreshLevelOptions();
+      if(key==="year"){
+        const yi=document.getElementById("year-input");
+        yi.value = state.year.size ? Array.from(state.year)[0] : "";
+      }
+      render();
+    });
+  });
+}
+
+function resetAll(){
+  Object.keys(state).forEach(k=>state[k].clear());
+  document.querySelectorAll(".opt").forEach(o=>{o.classList.remove("checked");o.querySelector("input").checked=false;});
+  subjectSearchTerm = "";
+  document.getElementById("subject-search").value = "";
+  document.getElementById("year-input").value = "";
+  refreshSubjectOptions();
+  refreshLevelOptions();
+  window.scrollTo({top:0,behavior:"smooth"});
+  render();
+}
+
+function matches(row){
+  return (state.exam.size===0 || state.exam.has(row.exam)) &&
+         (state.subject.size===0 || state.subject.has(row.subject)) &&
+         (state.level.size===0 || state.level.has(row.level)) &&
+         (state.type.size===0 || state.type.has(row.type)) &&
+         (state.year.size===0 || state.year.has(String(row.year)));
+}
+
+function anyFilterSet(){
+  return Object.values(state).some(s=>s.size>0);
+}
+
+function render(){
+  const heading = document.getElementById("results-heading");
+  const list = document.getElementById("results-list");
+
+  if(!anyFilterSet()){
+    heading.textContent = "Select filters above to see results";
+    list.innerHTML = `<div class="note">Papers, marking schemes, Project Briefs / AAC briefs and listening files (where applicable) will appear here. Deferred papers, when they exist for a year, are shown as a separate card.</div>`;
+    return;
+  }
+
+  const rows = DATA.filter(matches).sort((a,b)=> b.year-a.year || a.level.localeCompare(b.level) || (a.paper||"").localeCompare(b.paper||""));
+  heading.textContent = rows.length ? `${rows.length} document${rows.length>1?"s":""} found` : "No indexed documents match yet";
+
+  if(rows.length===0){
+    list.innerHTML = `<div class="empty">This combination isn't in our index yet.<br>
+      <a href="https://www.examinations.ie/" target="_blank" rel="noopener">Search it directly on examinations.ie →</a></div>`;
+    return;
+  }
+
+  list.innerHTML = rows.map(r=>`
+    <div class="card">
+      <div class="meta"><b>${r.subject}</b> · ${r.level} · ${r.year}${r.paper?" · "+r.paper:""} <span class="tag">${r.type}</span></div>
+      <a class="dl" href="${r.url}" target="_blank" rel="noopener">${r.type === "Listening File" ? "Play Audio" : "Open PDF"}</a>
+    </div>`).join("");
+}
+
+function applyYearInput(raw){
+  const val = raw.trim();
+  document.querySelectorAll('#opt-year .opt').forEach(o=>{o.classList.remove('checked');o.querySelector('input').checked=false;});
+  state.year.clear();
+  if(/^\d{4}$/.test(val)){
+    state.year.add(val);
+    document.querySelectorAll('#opt-year .opt').forEach(o=>{
+      if(o.dataset.val===val){o.classList.add('checked');o.querySelector('input').checked=true;}
+    });
+  }
+  render();
+}
+
+buildGroup("opt-exam",EXAMS,"exam");
+refreshSubjectOptions();
+refreshLevelOptions();
+buildGroup("opt-type",TYPES,"type");
+buildGroup("opt-year",YEARS,"year");
+
+document.getElementById("subject-search").addEventListener("input",e=>{
+  subjectSearchTerm = e.target.value;
+  applySubjectSearch();
+});
+
+const yearInputEl = document.getElementById("year-input");
+yearInputEl.addEventListener("input",e=>{
+  const v = e.target.value.trim();
+  if(v.length===4 || v.length===0) applyYearInput(v);
+});
+yearInputEl.addEventListener("keydown",e=>{
+  if(e.key==="Enter"){ applyYearInput(e.target.value); e.target.blur(); }
+});
+
+render();
+</script>
+</body>
+</html>
