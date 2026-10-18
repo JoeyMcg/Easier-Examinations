@@ -644,7 +644,10 @@ function addJuniorCertSubject(
       }
     });
   }
-}
+} 
+function addManualDocument(exam, subject, level, year, type, paper, url) {
+    DATA.push({ exam, subject, level, year, type, paper, url });
+  }
 
 // Subject Index Calls
 
@@ -968,14 +971,39 @@ addDeferredSubject("Geography", "005", 2022, 2025, [
   { name: "Part 2", code: "043", lang: "EV" },
   { name: "Map", code: "003", lang: "EV", level: ["C", "Common"], type: "Exam Paper" },
   { name: "Legend", code: "C00", lang: "EV", level: ["C", "Common"], type: "Exam Paper" }
-], [["A", "Higher"]], "EV");
+], [["A", "Higher"]], "Leaving Certificate");
 
 addDeferredSubject("English", "002", 2022, 2025, [
   { name: "Paper 1", code: "100" },
   { name: "Paper 2", code: "200" }
 ], [["A", "Higher"], ["G", "Ordinary"]]);
-
-
+addManualDocument(
+    "Leaving Certificate", 
+    "History", 
+    "Common", 
+    2027, 
+    "Project Brief / AAC", 
+    "Coursework Brief", 
+    "https://www.examinations.ie/docs/viewer.php?q=bb2385c8f6a8bf4abfded125b41d892c33eb3611"
+  );
+addManualDocument(
+    "Leaving Certificate", 
+    "Design and communication graphics", 
+    "Common", 
+    2027, 
+    "Project Brief / AAC", 
+    "Coursework Brief", 
+    "https://www.examinations.ie/docs/viewer.php?q=777d2305063691a6cc06b0f6b2382ecef1bc8013"
+  );
+addManualDocument(
+    "Leaving Certificate", 
+    "Physics", 
+    "Common", 
+    2027, 
+    "Project Brief / AAC", 
+    "Coursework Brief", 
+    "https://www.examinations.ie/docs/viewer.php?q=6b3c0a2e43b00815830cdb979f80156798661d5a"
+  );
 const state = {exam:new Set(),subject:new Set(),level:new Set(),type:new Set(),year:new Set()};
 
 const DEFAULT_LEVELS = ["Higher","Ordinary","Foundation","Common"];
